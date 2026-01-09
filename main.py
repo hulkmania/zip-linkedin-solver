@@ -2,8 +2,6 @@ from playwright.sync_api import sync_playwright
 from zip_solver.dom_reader import read_grid
 from zip_solver.solver import solve
 from zip_solver.bot import click_path
-import requests
-from bs4 import BeautifulSoup
 import os
 
 
@@ -42,21 +40,25 @@ def main():
         print("⏳ Caricamento pagina del gioco...")
         input("👉 Osserva la pagina che si è aperta, poi premi INVIO per continuare...")
 
+        # Alcune versioni del gioco usavano un iframe dedicato, ora la griglia è spesso
+        # direttamente nella pagina principale. Proviamo prima a prendere il frame,
+        # altrimenti ripieghiamo sulla pagina.
         frame = page.frame(url="https://www.linkedin.com/games/view/zip/desktop")
+        target = frame or page
         
         # Prova a cliccare il pulsante di avvio se esiste (potrebbero averlo rimosso per utenti loggati)
         try:
-            frame.wait_for_selector('#launch-footer-start-button', state="visible", timeout=30000)
-            frame.click('#launch-footer-start-button')
+            target.wait_for_selector('#launch-footer-start-button', state="visible", timeout=30000)
+            target.click('#launch-footer-start-button')
             print("✓ Pulsante di avvio cliccato")
-        except:
+        except Exception:
             print("ℹ️ Pulsante di avvio non trovato, potrebbe essere già in gioco...")
-
+        
         # attende il contenitore principale del gioco
         print("⏳ Attendendo il caricamento della griglia...")
-        frame.wait_for_selector('//div[@data-cell-idx]', state="visible", timeout=30000)
+        target.wait_for_selector('//div[@data-cell-idx]', state="visible", timeout=30000)
 
-        grid, cols = read_grid(frame)
+        grid, cols = read_grid(target)
         path = solve(grid)
         
         if path is None:
@@ -64,9 +66,9 @@ def main():
             print("📋 Controlla il file 'solver.log' per i dettagli dei percorsi scartati.")
         else:
             print(f"✓ Soluzione trovata! Eseguo {len(path)} mosse...")
-            click_path(frame, path, cols)
+            click_path(target, path, cols)
             print("✓ Puzzle completato!")
-
+        
         browser.close()
 
 
