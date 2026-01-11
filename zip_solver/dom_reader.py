@@ -29,24 +29,54 @@ def read_grid(page_or_frame):
             if txt.isdigit():
                 cell.number = int(txt)
 
-        # muri da classi trail-cell-wall--down, trail-cell-wall--right, trail-cell-wall--left, trail-cell-wall--up
-        # Se LinkedIn ha cambiato sistema per i muri, queste query semplicemente non troveranno nulla
-        # e la griglia verrà considerata senza muri (comunque risolvibile in molti casi).
-        wall_bottom = div.query_selector('.trail-cell-wall--down')
-        if wall_bottom:
-            cell.walls.add('BOTTOM')
+        # NUOVO SISTEMA LinkedIn ZIP: muri rappresentati da classi con ::after border-width: 12px
+        # Cerchiamo tutte le classi note e anche dinamicamente quelle con border-width negli stili
 
-        wall_top = div.query_selector('.trail-cell-wall--up')
-        if wall_top:
-            cell.walls.add('TOP')
+        # Classi note identificate:
+        # _2dafef0f -> RIGHT (border-right-width: 12px)
+        # ed9cc1f4 -> LEFT (border-left-width: 12px)
 
-        wall_right = div.query_selector('.trail-cell-wall--right')
+        wall_right = div.query_selector('._2dafef0f')
         if wall_right:
             cell.walls.add('RIGHT')
 
-        wall_left = div.query_selector('.trail-cell-wall--left')
+        wall_left = div.query_selector('.ed9cc1f4')
         if wall_left:
             cell.walls.add('LEFT')
+
+        # Per TOP e BOTTOM, cerchiamo dinamicamente classi con ::after border-top/bottom-width: 12px
+        # Eseguiamo JavaScript per controllare tutti gli elementi della cella
+        wall_check_script = """
+        (cellDiv) => {
+            const results = { top: false, bottom: false };
+
+            // Cerca tutti gli elementi nella cella
+            const elements = cellDiv.querySelectorAll('*');
+
+            for (const el of elements) {
+                const computedStyle = window.getComputedStyle(el, '::after');
+                const borderTop = computedStyle.getPropertyValue('border-top-width');
+                const borderBottom = computedStyle.getPropertyValue('border-bottom-width');
+
+                if (borderTop === '12px') results.top = true;
+                if (borderBottom === '12px') results.bottom = true;
+
+                if (results.top && results.bottom) break;
+            }
+
+            return results;
+        }
+        """
+
+        try:
+            wall_results = div.evaluate(wall_check_script)
+            if wall_results['top']:
+                cell.walls.add('TOP')
+            if wall_results['bottom']:
+                cell.walls.add('BOTTOM')
+        except Exception as e:
+            # Se fallisce lo script JS, procediamo senza muri TOP/BOTTOM (fallback sicuro)
+            print(f"⚠️ Impossibile verificare muri TOP/BOTTOM per cella {idx}: {e}")
 
         grid.add_cell(cell)
 
