@@ -7,7 +7,7 @@ logger.setLevel(logging.DEBUG)
 
 # Crea handler solo se non esiste già
 if not logger.handlers:
-    handler = logging.FileHandler("solver.log")
+    handler = logging.FileHandler("solver.log", encoding='utf-8')
     formatter = logging.Formatter("%(asctime)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -113,11 +113,16 @@ def dfs(grid, current_cell, path, visited, next_num, depth=0):
     """
     global _path_counter
 
-    # caso base: ultimo numero raggiunto e tutte le celle visitate
-    if next_num > max(grid.numbers):
+    # caso base: tutti i numeri visitati in ordine E tutte le celle visitate
+    if next_num - 1 == max(grid.numbers):
+        logger.info(f"DEBUG: Raggiunto ultimo numero {max(grid.numbers)}, visited={len(visited)}/{grid.total_cells}")
         if len(visited) == grid.total_cells:
-            return path + [current_cell]
+            solution_path = path + [current_cell]
+            logger.info(f"SOLUZIONE COMPLETA TROVATA! Percorso finale: {solution_path}")
+            logger.info(f"SUCCESSO: Tutti i numeri (1-{max(grid.numbers)}) e tutte le celle ({grid.total_cells}/{grid.total_cells}) visitate.")
+            return solution_path
         else:
+            logger.info(f"DEBUG: Ultimo numero raggiunto ma non tutte le celle visitate ({len(visited)}/{grid.total_cells})")
             return None
 
     r, c = current_cell
@@ -155,7 +160,7 @@ def dfs(grid, current_cell, path, visited, next_num, depth=0):
             _path_counter += 1
             visited_order = (path + [current_cell]) if path else [current_cell]
             logger.debug(
-                f"[Percorso #{_path_counter} scartato] Ordine visita: {visited_order}, "
+                f"[Percorso #{_path_counter} scartato] Ordine visita: {visited_order + [next_cell]}, "
                 f"Totale: {len(new_visited)}/{grid.total_cells}, "
                 f"Prossimo numero: {new_next_num}"
             )
@@ -182,6 +187,8 @@ def solve(grid):
     logger.info("="*80)
     logger.info("INIZIO RISOLUZIONE")
     logger.info(f"Griglia: {grid.total_cells} celle, numeri: {sorted(grid.numbers.keys())}")
+    logger.info(f"Numero massimo presente: {max(grid.numbers) if grid.numbers else 'N/A'}")
+    logger.info(f"Numeri consecutivi da 1 a {max(grid.numbers) if grid.numbers else 'N/A'}: {list(range(1, max(grid.numbers)+1)) if grid.numbers else 'N/A'}")
     logger.info("="*80)
     logger.info("\nRappresentazione griglia:")
     logger.info("\n" + visualize_grid(grid))
@@ -200,9 +207,10 @@ def solve(grid):
     )
 
     if result:
-        logger.info(f"✓ SOLUZIONE TROVATA! Percorsi testati: {_path_counter}")
+        # Evita simboli Unicode (✓, ✗) che possono dare problemi su alcune console Windows
+        logger.info(f"SOLUZIONE TROVATA! Percorsi testati: {_path_counter}")
     else:
-        logger.info(f"✗ NESSUNA SOLUZIONE TROVATA. Percorsi scartati: {_path_counter}")
+        logger.info(f"NESSUNA SOLUZIONE TROVATA. Percorsi scartati: {_path_counter}")
 
     logger.info("="*80)
     return result
