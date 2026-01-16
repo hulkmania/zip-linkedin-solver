@@ -1,7 +1,7 @@
 from playwright.sync_api import Page, FrameLocator
 import time
 
-def click_sudoku_path(target: Page | FrameLocator, solved_grid, initial_grid, cols=6, delay=0.5):
+def click_sudoku_path(target: Page | FrameLocator, solved_grid, initial_grid, cols=6, delay=0.2):
     """
     Clicca automaticamente le celle del Sudoku per inserire la soluzione.
     """

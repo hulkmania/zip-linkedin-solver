@@ -38,6 +38,29 @@ def show_menu():
             return '3'
 
 
+def ask_close_confirmation(game_name=""):
+    """Chiede conferma prima di chiudere il browser"""
+    print(f"\n{'='*50}")
+    print("✅ PUZZLE COMPLETATO!")
+    print(f"{'='*50}")
+    print(f"🎉 Il {game_name} è stato risolto con successo!")
+    print("📱 Il browser rimarrà aperto per permetterti di verificare la soluzione.")
+    print(f"{'='*50}")
+
+    while True:
+        try:
+            response = input("🔐 Vuoi chiudere il browser ora? (s/n): ").strip().lower()
+            if response in ['s', 'si', 'sì', 'y', 'yes']:
+                return True
+            elif response in ['n', 'no']:
+                return False
+            else:
+                print("❌ Rispondi 's' (sì) o 'n' (no).")
+        except KeyboardInterrupt:
+            print("\n👋 Chiudendo il browser...")
+            return True
+
+
 def main():
     # Crea la directory del profilo se non esiste
     os.makedirs(BROWSER_PROFILE_DIR, exist_ok=True)
@@ -158,6 +181,14 @@ def main():
                 print("   - Elementi del gioco che bloccano i click")
                 print("   - LinkedIn ha cambiato l'interfaccia")
 
+            # Chiedi conferma prima di chiudere il browser
+            if ask_close_confirmation("ZIP"):
+                browser.close()
+            else:
+                print("📱 Browser lasciato aperto per la verifica. Chiudilo manualmente quando vuoi.")
+                input("👉 Premi INVIO per continuare...")
+                browser.close()
+
         elif choice == '2': # SUDOKU
             # Per Sudoku, interagiamo direttamente con la pagina principale
             target = page
@@ -216,7 +247,13 @@ def main():
                 print("   - Elementi del gioco che bloccano i click")
                 print("   - LinkedIn ha cambiato l'interfaccia")
 
-        browser.close()
+            # Chiedi conferma prima di chiudere il browser
+            if ask_close_confirmation("Sudoku"):
+                browser.close()
+            else:
+                print("📱 Browser lasciato aperto per la verifica. Chiudilo manualmente quando vuoi.")
+                input("👉 Premi INVIO per continuare...")
+                browser.close()
 
 
 if __name__ == "__main__":
