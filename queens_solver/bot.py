@@ -29,7 +29,7 @@ class QueensBot:
             page: Playwright Page instance for LinkedIn
         """
         self.page = page
-        self.placement_delay = 1000  # ms between placements
+        self.placement_delay = 200  # ms between placements
 
     def place_queens(self, queen_positions: List[Tuple[int, int, int]], board_size: int = 8) -> bool:
         """
